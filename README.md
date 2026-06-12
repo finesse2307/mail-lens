@@ -139,6 +139,11 @@ npm run dev:client      # http://localhost:5173  (proxies /api to :4000)
 The app runs fully without an API key or a database — the AI layer degrades
 gracefully and storage falls back to memory.
 
+<img width="1470" height="826" alt="image" src="https://github.com/user-attachments/assets/c0d80c38-521d-4ec5-9cd0-81c7e22607a9" />
+<img width="1470" height="832" alt="image" src="https://github.com/user-attachments/assets/a4136cb2-c83d-40dc-9412-3adac5a0bf28" />
+
+
+
 ### Tests
 
 ```bash
@@ -202,15 +207,3 @@ phishing-analyzer/
         ├── apiClient.js
         └── App.jsx
 ```
-
----
-
-## Notes for discussion
-
-- **Graceful degradation** — the rule engine and the LLM call are
-  independent; the app returns a real result even when the AI layer fails.
-- **Deterministic core** — six pure, individually unit-tested functions; the
-  score floor prevents the model from overriding hard evidence.
-- **Separation of concerns** — parser, checks, orchestrator, AI service, data
-  layer, and routes are each isolated and independently testable.
-- **No secrets in the bundle** — the API key is server-side only.
