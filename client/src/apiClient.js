@@ -7,7 +7,13 @@
 
 const BASE = '/api';
 
-/** Parse a JSON response, surfacing the server's error message on failure. */
+/**
+ * Send cookies (the session cookie in particular) on every request.
+ * 'same-origin' is the right setting because the React app is served by
+ * the same Express server that hosts the API — they share an origin.
+ */
+const FETCH_OPTIONS = { credentials: 'same-origin' };
+
 async function handle(response) {
   let payload = null;
   try {
@@ -22,9 +28,9 @@ async function handle(response) {
   return payload;
 }
 
-/** POST /api/analyze — analyze a raw email. */
 export async function analyzeEmail(rawEmail) {
   const response = await fetch(`${BASE}/analyze`, {
+    ...FETCH_OPTIONS,
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email: rawEmail }),
@@ -32,12 +38,12 @@ export async function analyzeEmail(rawEmail) {
   return handle(response);
 }
 
-/** GET /api/analyses — recent analyses for the history view. */
 export async function fetchAnalyses() {
-  return handle(await fetch(`${BASE}/analyses`));
+  return handle(await fetch(`${BASE}/analyses`, FETCH_OPTIONS));
 }
 
-/** GET /api/analyses/:id — one full analysis. */
 export async function fetchAnalysisById(id) {
-  return handle(await fetch(`${BASE}/analyses/${encodeURIComponent(id)}`));
+  return handle(
+    await fetch(`${BASE}/analyses/${encodeURIComponent(id)}`, FETCH_OPTIONS)
+  );
 }

@@ -4,8 +4,11 @@
  * API routes.
  *
  *   POST /api/analyze        - analyze a raw email, save it, return the result
- *   GET  /api/analyses       - recent analyses for the history view
- *   GET  /api/analyses/:id   - one full analysis by id
+ *   GET  /api/analyses       - recent analyses for the current session
+ *   GET  /api/analyses/:id   - one full analysis by id (current session only)
+ *
+ * The session middleware (mounted in app.js) populates req.sessionId on
+ * every request. Writes are tagged with it; reads filter on it.
  */
 
 const express = require('express');
@@ -22,7 +25,6 @@ function validateEmailInput(value) {
   if (value.length > 100000) {
     return 'Email text is too large (max 100 KB).';
   }
-  // "Looks email-ish": either has header-style lines or a plausible address.
   const hasHeaders = /^[A-Za-z-]+:\s/m.test(value);
   const hasAddress = /[^\s@]+@[^\s@]+\.[^\s@]+/.test(value);
   if (!hasHeaders && !hasAddress) {
@@ -41,6 +43,8 @@ router.post('/analyze', async (req, res) => {
 
   try {
     const analysis = await analyzeEmail(rawEmail);
+    // Tag with the visitor's session ID so history queries scope to them.
+    analysis.sessionId = req.sessionId;
     const saved = await saveAnalysis(analysis);
     return res.status(201).json(saved);
   } catch (err) {
@@ -49,10 +53,10 @@ router.post('/analyze', async (req, res) => {
   }
 });
 
-// GET /api/analyses
-router.get('/analyses', async (_req, res) => {
+// GET /api/analyses — returns ONLY the current session's analyses.
+router.get('/analyses', async (req, res) => {
   try {
-    const analyses = await listAnalyses(25);
+    const analyses = await listAnalyses(req.sessionId, 25);
     return res.json(analyses);
   } catch (err) {
     console.error('[analyses] list failed:', err);
@@ -60,10 +64,12 @@ router.get('/analyses', async (_req, res) => {
   }
 });
 
-// GET /api/analyses/:id
+// GET /api/analyses/:id — returns the analysis only if it belongs to the
+// current session; otherwise 404 (indistinguishable from "not found", so
+// the API cannot be used to enumerate other sessions' analysis IDs).
 router.get('/analyses/:id', async (req, res) => {
   try {
-    const analysis = await getAnalysisById(req.params.id);
+    const analysis = await getAnalysisById(req.params.id, req.sessionId);
     if (!analysis) {
       return res.status(404).json({ error: 'Analysis not found.' });
     }
