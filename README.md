@@ -8,6 +8,9 @@ The two layers are **independent by design**: if the LLM API call fails, the
 rule engine still returns a complete result. This graceful degradation is the
 core architectural decision of the project.
 
+<img width="1470" height="832" alt="image" src="https://github.com/user-attachments/assets/60d09a9c-aff5-4c1b-bba7-4dc576f02faa" />
+
+
 ---
 
 ## Architecture
